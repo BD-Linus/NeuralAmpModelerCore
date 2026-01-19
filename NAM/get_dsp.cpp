@@ -79,17 +79,17 @@ std::vector<float> GetWeights(nlohmann::json const& j)
     throw std::runtime_error("Corrupted model file is missing weights.");
 }
 
-std::unique_ptr<DSP> get_dsp(const std::filesystem::path config_filename)
+std::unique_ptr<DSP> get_dsp(const std::string& config_filename)
 {
   dspData temp;
   return get_dsp(config_filename, temp);
 }
 
-std::unique_ptr<DSP> get_dsp(const std::filesystem::path config_filename, dspData& returnedConfig)
+std::unique_ptr<DSP> get_dsp(const std::string& config_filename, dspData& returnedConfig)
 {
-  if (!std::filesystem::exists(config_filename))
-    throw std::runtime_error("Config file doesn't exist!\n");
   std::ifstream i(config_filename);
+  if (!i.good())
+    throw std::runtime_error("Config file doesn't exist!\n");
   nlohmann::json j;
   i >> j;
   verify_config_version(j["version"]);
