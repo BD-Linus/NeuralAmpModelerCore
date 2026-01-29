@@ -103,12 +103,30 @@ nam::wavenet::_LayerArray::_LayerArray(const int input_size, const int condition
 
 void nam::wavenet::_LayerArray::SetMaxBufferSize(const int maxBufferSize)
 {
+  // Resize sub-component buffers
   _rechannel.SetMaxBufferSize(maxBufferSize);
   _head_rechannel.SetMaxBufferSize(maxBufferSize);
   for (auto it = _layers.begin(); it != _layers.end(); ++it)
   {
     it->SetMaxBufferSize(maxBufferSize);
   }
+
+  // Resize internal layer buffers
+  constexpr int BUFFER_MULTIPLIER = 4;
+  const long receptive_field = this->_get_receptive_field();
+  const long new_buffer_size = receptive_field + BUFFER_MULTIPLIER * maxBufferSize;
+
+  // Only resize if we need more space (never shrink)
+  if (new_buffer_size <= this->_get_buffer_size())
+    return;
+
+  const long channels = this->_get_channels();
+  for (size_t i = 0; i < this->_layer_buffers.size(); i++)
+  {
+    this->_layer_buffers[i].resize(channels, new_buffer_size);
+    this->_layer_buffers[i].setZero();
+  }
+  this->_buffer_start = receptive_field - 1;
 }
 
 void nam::wavenet::_LayerArray::advance_buffers_(const int num_frames)
@@ -203,25 +221,6 @@ void nam::wavenet::_LayerArray::_rewind_buffers_()
     this->_layer_buffers[i].middleCols(start - d, d) = this->_layer_buffers[i].middleCols(this->_buffer_start - d, d);
   }
   this->_buffer_start = start;
-}
-
-void nam::wavenet::_LayerArray::SetMaxBufferSize(const int maxBufferSize)
-{
-  constexpr int BUFFER_MULTIPLIER = 4;
-  const long receptive_field = this->_get_receptive_field();
-  const long new_buffer_size = receptive_field + BUFFER_MULTIPLIER * maxBufferSize;
-
-  // Only resize if we need more space (never shrink)
-  if (new_buffer_size <= this->_get_buffer_size())
-    return;
-
-  const long channels = this->_get_channels();
-  for (size_t i = 0; i < this->_layer_buffers.size(); i++)
-  {
-    this->_layer_buffers[i].resize(channels, new_buffer_size);
-    this->_layer_buffers[i].setZero();
-  }
-  this->_buffer_start = receptive_field - 1;
 }
 
 // Head =======================================================================
@@ -324,15 +323,6 @@ nam::wavenet::WaveNet::WaveNet(const std::vector<nam::wavenet::LayerArrayParams>
   mPrewarmSamples = 1;
   for (size_t i = 0; i < this->_layer_arrays.size(); i++)
     mPrewarmSamples += this->_layer_arrays[i].get_receptive_field();
-}
-
-void nam::wavenet::WaveNet::SetMaxBufferSize(const int maxBufferSize)
-{
-  DSP::SetMaxBufferSize(maxBufferSize);
-  for (auto& layer_array : this->_layer_arrays)
-  {
-    layer_array.SetMaxBufferSize(maxBufferSize);
-  }
 }
 
 void nam::wavenet::WaveNet::set_weights_(std::vector<float>& weights)

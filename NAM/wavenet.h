@@ -123,8 +123,6 @@ public:
                 const int num_frames);
   void set_num_frames_(const long num_frames);
   void set_weights_(std::vector<float>::iterator& it);
-  // Resize internal buffers for a new max buffer size (called from WaveNet::SetMaxBufferSize)
-  void SetMaxBufferSize(const int maxBufferSize);
 
   // "Zero-indexed" receptive field.
   // E.g. a 1x1 convolution has a z.i.r.f. of zero.
@@ -196,7 +194,6 @@ protected:
   // Element-wise arrays:
   Eigen::MatrixXf _condition;
 
-  void SetMaxBufferSize(const int maxBufferSize) override;
   // Fill in the "condition" array that's fed into the various parts of the net.
   virtual void _set_condition_array(NAM_SAMPLE* input, const int num_frames);
   // How many conditioning inputs are there.

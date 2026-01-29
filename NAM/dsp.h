@@ -115,8 +115,6 @@ protected:
   // How many samples should be processed for me to be considered "warmed up"?
   virtual int PrewarmSamples() { return 0; };
 
-  virtual void SetMaxBufferSize(const int maxBufferSize);
-
 private:
   struct Level
   {
