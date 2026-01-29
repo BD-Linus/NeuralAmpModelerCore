@@ -123,6 +123,8 @@ public:
                 const int num_frames);
   void set_num_frames_(const long num_frames);
   void set_weights_(std::vector<float>::iterator& it);
+  // Resize internal buffers for a new max buffer size (called from WaveNet::SetMaxBufferSize)
+  void SetMaxBufferSize(const int maxBufferSize);
 
   // "Zero-indexed" receptive field.
   // E.g. a 1x1 convolution has a z.i.r.f. of zero.
@@ -187,6 +189,7 @@ public:
           std::vector<float> weights, const double expected_sample_rate = -1.0);
   ~WaveNet() = default;
   void process(NAM_SAMPLE* input, NAM_SAMPLE* output, const int num_frames) override;
+  void SetMaxBufferSize(const int maxBufferSize) override;
   void set_weights_(std::vector<float>& weights);
 
 protected:
