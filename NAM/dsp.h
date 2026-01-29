@@ -77,6 +77,8 @@ public:
   // This doesn't call prewarm(). If you want to do that, then you might want to use ResetAndPrewarm().
   // See https://github.com/sdatkinson/NeuralAmpModelerCore/issues/96 for the reasoning.
   virtual void Reset(const double sampleRate, const int maxBufferSize);
+  // Override this in subclasses to resize internal buffers when the max buffer size changes.
+  virtual void SetMaxBufferSize(const int maxBufferSize) { mMaxBufferSize = maxBufferSize; }
   // Reset(), then prewarm()
   void ResetAndPrewarm(const double sampleRate, const int maxBufferSize)
   {
@@ -112,8 +114,6 @@ protected:
 
   // How many samples should be processed for me to be considered "warmed up"?
   virtual int PrewarmSamples() { return 0; };
-
-  virtual void SetMaxBufferSize(const int maxBufferSize);
 
 private:
   struct Level

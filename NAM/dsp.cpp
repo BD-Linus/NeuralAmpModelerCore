@@ -81,11 +81,6 @@ void nam::DSP::SetLoudness(const double loudness)
   mHasLoudness = true;
 }
 
-void nam::DSP::SetMaxBufferSize(const int maxBufferSize)
-{
-  mMaxBufferSize = maxBufferSize;
-}
-
 // Buffer =====================================================================
 
 nam::Buffer::Buffer(const int receptive_field, const double expected_sample_rate)

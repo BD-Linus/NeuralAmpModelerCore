@@ -82,7 +82,7 @@ void nam::wavenet::_Layer::set_num_frames_(const long num_frames)
 
 // LayerArray =================================================================
 
-#define LAYER_ARRAY_BUFFER_SIZE 65536
+#define LAYER_ARRAY_BUFFER_SIZE 4096
 
 nam::wavenet::_LayerArray::_LayerArray(const int input_size, const int condition_size, const int head_size,
                                        const int channels, const int kernel_size, const std::vector<int>& dilations,
@@ -103,12 +103,30 @@ nam::wavenet::_LayerArray::_LayerArray(const int input_size, const int condition
 
 void nam::wavenet::_LayerArray::SetMaxBufferSize(const int maxBufferSize)
 {
+  // Resize sub-component buffers
   _rechannel.SetMaxBufferSize(maxBufferSize);
   _head_rechannel.SetMaxBufferSize(maxBufferSize);
   for (auto it = _layers.begin(); it != _layers.end(); ++it)
   {
     it->SetMaxBufferSize(maxBufferSize);
   }
+
+  // Resize internal layer buffers
+  constexpr int BUFFER_MULTIPLIER = 4;
+  const long receptive_field = this->_get_receptive_field();
+  const long new_buffer_size = receptive_field + BUFFER_MULTIPLIER * maxBufferSize;
+
+  // Only resize if we need more space (never shrink)
+  if (new_buffer_size <= this->_get_buffer_size())
+    return;
+
+  const long channels = this->_get_channels();
+  for (size_t i = 0; i < this->_layer_buffers.size(); i++)
+  {
+    this->_layer_buffers[i].resize(channels, new_buffer_size);
+    this->_layer_buffers[i].setZero();
+  }
+  this->_buffer_start = receptive_field - 1;
 }
 
 void nam::wavenet::_LayerArray::advance_buffers_(const int num_frames)
